@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Monitoring - AlgoTrading Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-chart-bar me-2"></i>Performance Monitoring</h2>
+        <p class="text-muted">Analyze trading performance and system metrics</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-outline-primary" onclick="refreshAllData()">
+            <i class="fas fa-sync-alt me-2"></i>Refresh Data
+        </button>
+    </div>
+</div>
+
+<!-- Performance Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 id="total-pnl" class="mb-2">$0.00</h3>
+                <p class="text-muted mb-0">Total P&L</p>
+                <small id="pnl-change" class="text-muted">Today: $0.00</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 id="win-rate" class="mb-2 text-success">0%</h3>
+                <p class="text-muted mb-0">Win Rate</p>
+                <small class="text-muted">Last 30 days</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 id="total-trades-count" class="mb-2 text-info">0</h3>
+                <p class="text-muted mb-0">Total Trades</p>
+                <small class="text-muted">All time</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 id="profit-factor" class="mb-2 text-warning">0.00</h3>
+                <p class="text-muted mb-0">Profit Factor</p>
+                <small class="text-muted">Profit/Loss ratio</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Performance Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Equity Curve
+                    </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="timeframe" id="tf7d" value="7" checked>
+                        <label class="btn btn-outline-primary" for="tf7d">7D</label>
+                        
+                        <input type="radio" class="btn-check" name="timeframe" id="tf30d" value="30">
+                        <label class="btn btn-outline-primary" for="tf30d">30D</label>
+                        
+                        <input type="radio" class="btn-check" name="timeframe" id="tf90d" value="90">
+                        <label class="btn btn-outline-primary" for="tf90d">90D</label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="equityChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Breakdown -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>Performance by Symbol
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="symbolChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Tables -->
+<div class="row mb-4">
+    <!-- Trading Statistics -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calculator me-2"></i>Trading Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <tbody id="trading-stats">
+                            <tr><td colspan="2" class="text-center">Loading statistics...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Symbol Performance -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-coins me-2"></i>Symbol Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Trades</th>
+                                <th>Win Rate</th>
+                                <th>P&L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="symbol-performance">
+                            <tr><td colspan="4" class="text-center">Loading performance...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Monitoring -->
+<div class="row mb-4">
+    <!-- System Status -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="system-status-details">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading system status...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Sessions -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-play-circle me-2"></i>Active Sessions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="active-sessions" style="max-height: 250px; overflow-y: auto;">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading sessions...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Alerts -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>Recent Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recent-alerts" style="max-height: 250px; overflow-y: auto;">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-bell-slash fa-2x mb-2 opacity-50"></i>
+                        <p>No recent alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Logs -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-terminal me-2"></i>System Logs
+            </h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" id="logLevelFilter" style="width: auto;" onchange="filterLogs()">
+                    <option value="">All Levels</option>
+                    <option value="INFO">Info</option>
+                    <option value="WARNING">Warning</option>
+                    <option value="ERROR">Error</option>
+                    <option value="DEBUG">Debug</option>
+                </select>
+                <select class="form-select form-select-sm" id="logComponentFilter" style="width: auto;" onchange="filterLogs()">
+                    <option value="">All Components</option>
+                    <option value="STRATEGY">Strategy</option>
+                    <option value="MT5_INTERFACE">MT5 Interface</option>
+                    <option value="API">API</option>
+                    <option value="DATABASE">Database</option>
+                </select>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                    <i class="fas fa-trash me-1"></i>Clear
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="system-logs" style="max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85em;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading logs...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='/js/monitoring.js') }}"></script>
+{% endblock %}

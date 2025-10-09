@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Strategies - AlgoTrading Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-cog me-2"></i>Trading Strategies</h2>
+        <p class="text-muted">Manage and monitor your algorithmic trading strategies</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" onclick="showCreateStrategyModal()">
+            <i class="fas fa-plus me-2"></i>Create New Strategy
+        </button>
+    </div>
+</div>
+
+<!-- Strategy Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3 id="total-strategies">0</h3>
+                <p class="mb-0">Total Strategies</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 id="active-strategies">0</h3>
+                <p class="mb-0">Active</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3 id="paused-strategies">0</h3>
+                <p class="mb-0">Paused</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <h3 id="stopped-strategies">0</h3>
+                <p class="mb-0">Stopped</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategies List -->
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">Strategy List</h5>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-6">
+                        <select class="form-select form-select-sm" id="statusFilter" onchange="filterStrategies()">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="paused">Paused</option>
+                            <option value="stopped">Stopped</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-select form-select-sm" id="typeFilter" onchange="filterStrategies()">
+                            <option value="">All Types</option>
+                            <option value="martingale">Martingale</option>
+                            <option value="grid">Grid</option>
+                            <option value="scalping">Scalping</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Strategy Name</th>
+                        <th>Type</th>
+                        <th>Symbol</th>
+                        <th>Status</th>
+                        <th>Initial Lot</th>
+                        <th>Recovery Step</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="strategies-table-body">
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading strategies...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Strategy Modal -->
+<div class="modal fade" id="createStrategyModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Strategy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createStrategyForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Basic Information</h6>
+                            
+                            <div class="mb-3">
+                                <label for="strategyName" class="form-label">Strategy Name *</label>
+                                <input type="text" class="form-control" id="strategyName" required>
+                                <div class="form-text">Choose a unique name for your strategy</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="strategyType" class="form-label">Strategy Type *</label>
+                                <select class="form-select" id="strategyType" required>
+                                    <option value="martingale">Martingale</option>
+                                    <option value="grid">Grid Trading</option>
+                                    <option value="scalping">Scalping</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="strategySymbol" class="form-label">Trading Symbol *</label>
+                                <select class="form-select" id="strategySymbol" required>
+                                    <option value="BTCUSD">BTCUSD</option>
+                                    <option value="EURUSD">EURUSD</option>
+                                    <option value="GBPUSD">GBPUSD</option>
+                                    <option value="USDJPY">USDJPY</option>
+                                    <option value="XAUUSD">XAUUSD</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" rows="4" 
+                                    placeholder="Describe your strategy..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2 mb-3">Trading Parameters</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="initialLotSize" class="form-label">Initial Lot Size *</label>
+                                        <input type="number" class="form-control" id="initialLotSize" 
+                                            step="0.01" min="0.01" value="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="maxLotSize" class="form-label">Max Lot Size</label>
+                                        <input type="number" class="form-control" id="maxLotSize" 
+                                            step="0.01" min="0.01" value="1.00">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="recoveryStep" class="form-label">Recovery Step (Pips)</label>
+                                        <input type="number" class="form-control" id="recoveryStep" 
+                                            value="50" min="1">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="maxTrades" class="form-label">Max Trades</label>
+                                        <input type="number" class="form-control" id="maxTrades" 
+                                            value="5" min="1" max="20">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="border-bottom pb-2 mb-3 mt-4">Risk Management</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="takeProfit" class="form-label">Take Profit (Pips)</label>
+                                        <input type="number" class="form-control" id="takeProfit" 
+                                            value="100" min="1">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="stopLoss" class="form-label">Stop Loss (Pips)</label>
+                                        <input type="number" class="form-control" id="stopLoss" 
+                                            value="500" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="maxDrawdown" class="form-label">Max Drawdown ($)</label>
+                                        <input type="number" class="form-control" id="maxDrawdown" 
+                                            value="1000" min="1">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="riskPerTrade" class="form-label">Risk Per Trade (%)</label>
+                                        <input type="number" class="form-control" id="riskPerTrade" 
+                                            step="0.1" value="2.0" min="0.1" max="10">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createStrategy()">
+                    <i class="fas fa-save me-2"></i>Create Strategy
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Strategy Modal -->
+<div class="modal fade" id="editStrategyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Strategy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editStrategyForm">
+                    <input type="hidden" id="editStrategyId">
+                    <!-- Form fields similar to create modal but populated with existing data -->
+                    <div class="mb-3">
+                        <label for="editStrategyName" class="form-label">Strategy Name</label>
+                        <input type="text" class="form-control" id="editStrategyName" required>
+                    </div>
+                    <!-- Add more fields as needed -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateStrategy()">
+                    <i class="fas fa-save me-2"></i>Update Strategy
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Strategy Details Modal -->
+<div class="modal fade" id="strategyDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="strategyDetailsTitle">Strategy Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="strategyDetailsContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading strategy details...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='/js/strategies.js') }}"></script>
+{% endblock %}

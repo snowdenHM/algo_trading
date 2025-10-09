@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AlgoTrading Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- System Status Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">MT5 Connection</h6>
+                        <h4 id="mt5-status">Checking...</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-plug fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Active Strategies</h6>
+                        <h4 id="active-strategies">0</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-cog fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Open Positions</h6>
+                        <h4 id="open-positions">0</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Today's P&L</h6>
+                        <h4 id="daily-pnl">$0.00</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-dollar-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MT5 Connection Panel -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>MT5 Connection
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="connection-status-panel" class="mb-3">
+                    <div class="alert alert-info" id="connection-alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span id="connection-message">Checking connection status...</span>
+                    </div>
+                </div>
+                <form id="mt5-connection-form" style="display: none;">
+                    <div class="mb-3">
+                        <label for="account-id" class="form-label">Account ID</label>
+                        <input type="number" class="form-control" id="account-id" placeholder="Your MT5 account number">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="Your MT5 password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="server" class="form-label">Server</label>
+                        <input type="text" class="form-control" id="server" placeholder="e.g., MetaQuotes-Demo">
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="button" class="btn btn-success" onclick="connectMT5()">
+                            <i class="fas fa-plug me-2"></i>Connect
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="disconnectMT5()">
+                            <i class="fas fa-unlink me-2"></i>Disconnect
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="showQuickTradeModal()">
+                        <i class="fas fa-plus me-2"></i>Place Quick Trade
+                    </button>
+                    <button class="btn btn-primary" onclick="showCreateStrategyModal()">
+                        <i class="fas fa-cog me-2"></i>Create Strategy
+                    </button>
+                    <button class="btn btn-warning" onclick="closeAllPositions()">
+                        <i class="fas fa-times-circle me-2"></i>Close All Positions
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Market Prices -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Market Prices
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="market-prices">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading prices...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Trades -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Recent Trades
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recent-trades" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading trades...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Performance Chart -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Performance Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Logs -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-terminal me-2"></i>System Logs
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="system-logs" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85em;">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading logs...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Trade Modal -->
+<div class="modal fade" id="quickTradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Trade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickTradeForm">
+                    <div class="mb-3">
+                        <label for="symbol" class="form-label">Symbol</label>
+                        <select class="form-select" id="symbol" required>
+                            <option value="BTCUSD">BTCUSD</option>
+                            <option value="EURUSD">EURUSD</option>
+                            <option value="GBPUSD">GBPUSD</option>
+                            <option value="USDJPY">USDJPY</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tradeType" class="form-label">Trade Type</label>
+                        <select class="form-select" id="tradeType" required>
+                            <option value="buy">Buy</option>
+                            <option value="sell">Sell</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="volume" class="form-label">Volume (Lot Size)</label>
+                        <input type="number" class="form-control" id="volume" step="0.01" min="0.01" value="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stopLoss" class="form-label">Stop Loss (Optional)</label>
+                        <input type="number" class="form-control" id="stopLoss" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label for="takeProfit" class="form-label">Take Profit (Optional)</label>
+                        <input type="number" class="form-control" id="takeProfit" step="0.01">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="placeQuickTrade()">Place Trade</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Strategy Modal -->
+<div class="modal fade" id="createStrategyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Strategy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createStrategyForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="strategyName" class="form-label">Strategy Name</label>
+                                <input type="text" class="form-control" id="strategyName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="strategySymbol" class="form-label">Symbol</label>
+                                <select class="form-select" id="strategySymbol" required>
+                                    <option value="BTCUSD">BTCUSD</option>
+                                    <option value="EURUSD">EURUSD</option>
+                                    <option value="GBPUSD">GBPUSD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="initialLotSize" class="form-label">Initial Lot Size</label>
+                                <input type="number" class="form-control" id="initialLotSize" step="0.01" min="0.01" value="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="recoveryStep" class="form-label">Recovery Step (Pips)</label>
+                                <input type="number" class="form-control" id="recoveryStep" value="50" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="takeProfit" class="form-label">Take Profit (Pips)</label>
+                                <input type="number" class="form-control" id="strategytakeProfit" value="100" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="stopLoss" class="form-label">Stop Loss (Pips)</label>
+                                <input type="number" class="form-control" id="strategystopLoss" value="500" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createStrategy()">Create Strategy</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='/js/dashboard.js') }}"></script>
+{% endblock %}
